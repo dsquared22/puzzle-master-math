@@ -1,0 +1,141 @@
+{
+    "addition": {
+        "easy": [
+            { "text": "3 + 4", "answer": "7" },
+            { "text": "5 + 2", "answer": "7" },
+            { "text": "6 + 3", "answer": "9" },
+            { "text": "4 + 5", "answer": "9" },
+            { "text": "2 + 6", "answer": "8" },
+            { "text": "1 + 7", "answer": "8" },
+            { "text": "3 + 5", "answer": "8" },
+            { "text": "6 + 2", "answer": "8" },
+            { "text": "4 + 6", "answer": "10" },
+            { "text": "8 + 3", "answer": "11" },
+            { "text": "7 + 5", "answer": "12" },
+            { "text": "9 + 4", "answer": "13" }
+        ],
+        "medium": [
+            { "text": "12 + 15", "answer": "27" },
+            { "text": "18 + 23", "answer": "41" },
+            { "text": "25 + 16", "answer": "41" },
+            { "text": "31 + 19", "answer": "50" },
+            { "text": "45 + 27", "answer": "72" },
+            { "text": "38 + 45", "answer": "83" },
+            { "text": "56 + 37", "answer": "93" },
+            { "text": "64 + 28", "answer": "92" }
+        ],
+        "hard": [
+            { "text": "123 + 456", "answer": "579" },
+            { "text": "234 + 567", "answer": "801" },
+            { "text": "345 + 678", "answer": "1023" },
+            { "text": "789 + 234", "answer": "1023" },
+            { "text": "456 + 789", "answer": "1245" },
+            { "text": "678 + 345", "answer": "1023" }
+        ]
+    },
+    "subtraction": {
+        "easy": [
+            { "text": "9 - 4", "answer": "5" },
+            { "text": "8 - 3", "answer": "5" },
+            { "text": "7 - 2", "answer": "5" },
+            { "text": "10 - 3", "answer": "7" },
+            { "text": "12 - 4", "answer": "8" },
+            { "text": "15 - 6", "answer": "9" },
+            { "text": "11 - 3", "answer": "8" },
+            { "text": "14 - 5", "answer": "9" },
+            { "text": "13 - 6", "answer": "7" },
+            { "text": "16 - 7", "answer": "9" }
+        ],
+        "medium": [
+            { "text": "23 - 15", "answer": "8" },
+            { "text": "45 - 27", "answer": "18" },
+            { "text": "56 - 38", "answer": "18" },
+            { "text": "72 - 45", "answer": "27" },
+            { "text": "89 - 52", "answer": "37" },
+            { "text": "95 - 48", "answer": "47" },
+            { "text": "84 - 37", "answer": "47" },
+            { "text": "67 - 29", "answer": "38" }
+        ],
+        "hard": [
+            { "text": "234 - 156", "answer": "78" },
+            { "text": "567 - 289", "answer": "278" },
+            { "text": "789 - 456", "answer": "333" },
+            { "text": "876 - 387", "answer": "489" },
+            { "text": "654 - 278", "answer": "376" },
+            { "text": "923 - 547", "answer": "376" }
+        ]
+    },
+    "multiplication": {
+        "easy": [
+            { "text": "2 × 3", "answer": "6" },
+            { "text": "3 × 4", "answer": "12" },
+            { "text": "5 × 2", "answer": "10" },
+            { "text": "4 × 3", "answer": "12" },
+            { "text": "6 × 2", "answer": "12" },
+            { "text": "3 × 5", "answer": "15" },
+            { "text": "4 × 4", "answer": "16" },
+            { "text": "3 × 6", "answer": "18" },
+            { "text": "5 × 4", "answer": "20" },
+            { "text": "6 × 4", "answer": "24" }
+        ],
+        "medium": [
+            { "text": "12 × 5", "answer": "60" },
+            { "text": "8 × 6", "answer": "48" },
+            { "text": "9 × 6", "answer": "54" },
+            { "text": "7 × 6", "answer": "42" },
+            { "text": "11 × 6", "answer": "66" },
+            { "text": "6 × 12", "answer": "72" },
+            { "text": "4 × 6", "answer": "24" },
+            { "text": "2 × 6", "answer": "12" },
+            { "text": "6 × 6", "answer": "36" },
+            { "text": "5 × 6", "answer": "30" },
+            { "text": "2 × 7", "answer": "14" },
+            { "text": "7 × 1", "answer": "7" },
+            { "text": "5 × 0", "answer": "0" }
+
+        ],
+        "hard": [
+            { "text": "5 × 5", "answer": "25" },
+            { "text": "12 × 2", "answer": "24" },
+            { "text": "25 × 4", "answer": "100" },
+            { "text": "2 × 15", "answer": "30" },
+            { "text": "22 × 22", "answer": "44" },
+            { "text": "3 x 12", "answer": "36" },
+            { "text": "7 × 3", "answer": "21" }
+        ]
+    },
+    "division": {
+        "easy": [
+            { "text": "6 ÷ 2", "answer": "3" },
+            { "text": "8 ÷ 4", "answer": "2" },
+            { "text": "9 ÷ 3", "answer": "3" },
+            { "text": "10 ÷ 2", "answer": "5" },
+            { "text": "12 ÷ 3", "answer": "4" },
+            { "text": "14 ÷ 2", "answer": "7" },
+            { "text": "15 ÷ 3", "answer": "5" },
+            { "text": "16 ÷ 4", "answer": "4" },
+            { "text": "18 ÷ 3", "answer": "6" },
+            { "text": "20 ÷ 4", "answer": "5" }
+        ],
+        "medium": [
+            { "text": "24 ÷ 6", "answer": "4" },
+            { "text": "35 ÷ 5", "answer": "7" },
+            { "text": "48 ÷ 6", "answer": "8" },
+            { "text": "54 ÷ 6", "answer": "9" },
+            { "text": "15 ÷ 3", "answer": "5" },
+            { "text": "72 ÷ 6", "answer": "12" },
+            { "text": "100 ÷ 5", "answer": "20" },
+            { "text": "36 ÷ 6", "answer": "6" }
+        ],
+        "hard": [
+            { "text": "144 ÷ 12", "answer": "12" },
+            { "text": "225 ÷ 15", "answer": "15" },
+            { "text": "336 ÷ 16", "answer": "21" },
+            { "text": "256 ÷ 16", "answer": "16" },
+            { "text": "288 ÷ 18", "answer": "16" },
+            { "text": "324 ÷ 18", "answer": "18" },
+            { "text": "392 ÷ 14", "answer": "28" },
+            { "text": "441 ÷ 21", "answer": "21" }
+        ]
+    }
+}
