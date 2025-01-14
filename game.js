@@ -7,103 +7,95 @@ let matchedPieces = new Set();
 let currentLevelData = null;
 let usedProblemsThisSession = new Set();
 let mathProblems = null;
+let selectedOperation = null; // Track selected operation
 
-// Sound effects
-const sounds = {};
-
-// Function to load sounds with enhanced error handling and debugging
-function loadSounds() {
-    console.log('Starting to load sounds...');
-    const soundFiles = {
-        correct: 'sounds/correct.mp3',
-        wrong: 'sounds/wrong.mp3',
-        levelComplete: 'sounds/level-complete.mp3'
-    };
-
-    for (const [name, path] of Object.entries(soundFiles)) {
-        console.log(`Attempting to load sound: ${name} from path: ${path}`);
-        const audio = new Audio();
+// Function to create operation selection screen
+function showOperationSelection() {
+    const gameBoard = document.getElementById('gameBoard');
+    gameBoard.innerHTML = '';
+    
+    // Hide game elements initially
+    document.querySelector('.score-container').style.display = 'none';
+    document.getElementById('next-level-btn').style.display = 'none';
+    document.getElementById('hint-btn').style.display = 'none';
+    
+    // Create operation selection container
+    const selectionContainer = document.createElement('div');
+    selectionContainer.className = 'operation-selection';
+    selectionContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 20px;
+    `;
+    
+    const title = document.createElement('h2');
+    title.textContent = 'Choose an Operation';
+    title.style.color = '#00ff9d';
+    
+    const operations = ['addition', 'subtraction', 'multiplication', 'division'];
+    const symbols = { addition: '+', subtraction: '-', multiplication: '×', division: '÷' };
+    
+    operations.forEach(operation => {
+        const button = document.createElement('button');
+        button.className = 'operation-btn';
+        button.innerHTML = `${operation.charAt(0).toUpperCase() + operation.slice(1)} ${symbols[operation]}`;
+        button.style.cssText = `
+            width: 200px;
+            padding: 15px;
+            font-size: 1.2em;
+            margin: 10px;
+            cursor: pointer;
+            background: rgba(0, 255, 157, 0.1);
+            border: 2px solid #00ff9d;
+            color: white;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        `;
         
-        audio.addEventListener('canplaythrough', () => {
-            console.log(`Sound ${name} loaded successfully`);
+        button.addEventListener('mouseover', () => {
+            button.style.background = 'rgba(0, 255, 157, 0.3)';
         });
         
-        audio.addEventListener('error', (e) => {
-            console.error(`Sound ${name} failed to load from path ${path}:`, e);
-            console.error('Error code:', e.target.error ? e.target.error.code : 'unknown');
-            sounds[name] = null; // Mark as unavailable
+        button.addEventListener('mouseout', () => {
+            button.style.background = 'rgba(0, 255, 157, 0.1)';
         });
         
-        audio.src = path;
-        sounds[name] = audio;
-    }
+        button.addEventListener('click', () => {
+            selectedOperation = operation;
+            startGame();
+        });
+        
+        selectionContainer.appendChild(button);
+    });
+    
+    gameBoard.appendChild(title);
+    gameBoard.appendChild(selectionContainer);
 }
 
-// Function to play sound with enhanced error handling
-function playSound(soundName) {
-    console.log(`Attempting to play sound: ${soundName}`);
-    console.log(`Mute state: ${isMuted}`);
-    
-    if (!sounds[soundName]) {
-        console.warn(`Sound ${soundName} is not available`);
-        return;
-    }
-    
-    if (!isMuted) {
-        const sound = sounds[soundName].cloneNode();
-        sound.play()
-            .then(() => {
-                console.log(`Sound ${soundName} played successfully`);
-            })
-            .catch(e => {
-                console.error(`Sound ${soundName} failed to play:`, e);
-                // Try playing without cloning as fallback
-                sounds[soundName].play().catch(e => {
-                    console.error(`Fallback play for ${soundName} also failed:`, e);
-                });
-            });
-    }
-}
-
-// Mute state
-let isMuted = false;
-
-// Function to generate problems for a level
+// Modify generateProblems to use only selected operation
 function generateProblems(level) {
     const problems = [];
     const usedAnswers = new Set();
     let difficulty;
-    let operations;
 
-    // Define difficulty and operations based on level
+    // Define difficulty based on level
     if (level <= 3) {
         difficulty = 'easy';
-        operations = level === 1 ? ['addition'] 
-                  : level === 2 ? ['addition', 'subtraction']
-                  : ['addition', 'subtraction', 'multiplication'];
     } else if (level <= 6) {
         difficulty = 'medium';
-        operations = ['addition', 'subtraction', 'multiplication', 'division'];
     } else {
         difficulty = 'hard';
-        operations = ['addition', 'subtraction', 'multiplication', 'division'];
     }
 
-    // Get random problems with unique answers
-    while (problems.length < 3) {
-        const operation = operations[Math.floor(Math.random() * operations.length)];
-        if (!mathProblems[operation]) continue; // Skip if operation not found
-        
-        const availableProblems = mathProblems[operation][difficulty].filter(
-            p => !usedAnswers.has(p.answer) && !usedProblemsThisSession.has(p.text)
-        );
-        
-        if (availableProblems.length === 0) {
-            // If we run out of unused problems, clear the session history for this difficulty
-            usedProblemsThisSession.clear();
-            continue;
-        }
-        
+    // Get problems only from selected operation
+    const availableProblems = mathProblems[selectedOperation][difficulty].filter(
+        p => !usedAnswers.has(p.answer) && !usedProblemsThisSession.has(p.text)
+    );
+
+    // Get 3 random problems
+    while (problems.length < 3 && availableProblems.length > 0) {
         const randomIndex = Math.floor(Math.random() * availableProblems.length);
         const problem = availableProblems[randomIndex];
         
@@ -117,191 +109,41 @@ function generateProblems(level) {
         
         usedAnswers.add(problem.answer);
         usedProblemsThisSession.add(problem.text);
+        availableProblems.splice(randomIndex, 1);
+    }
+
+    // If we don't have enough problems, clear session history and try again
+    if (problems.length < 3) {
+        usedProblemsThisSession.clear();
+        return generateProblems(level);
     }
 
     return problems;
 }
 
-// Function to create level data with random problems
-function createLevelData(level) {
-    console.log('Creating level data for level:', level);
-    const pieces = generateProblems(level);
-    console.log('Generated pieces:', pieces);
+function startGame() {
+    // Show game elements
+    document.querySelector('.score-container').style.display = 'flex';
+    document.getElementById('next-level-btn').style.display = 'block';
+    document.getElementById('hint-btn').style.display = 'block';
     
-    const targets = pieces.map((piece, index) => ({
-        id: piece.id,
-        text: piece.answer,
-        x: 750,
-        y: [170, 290, 50][index] // Keep the same target positions as original levels
-    }));
+    // Reset game state
+    score = 0;
+    level = 1;
+    usedProblemsThisSession.clear();
     
-    console.log('Generated targets:', targets);
-    return { pieces, targets };
-}
-
-function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.id);
-    e.target.classList.add('dragging');
-}
-
-function handleDragEnd(e) {
-    e.target.classList.remove('dragging');
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.target.closest('.target-spot')?.classList.add('drag-over');
-}
-
-function handleDragLeave(e) {
-    e.target.closest('.target-spot')?.classList.remove('drag-over');
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    const targetSpot = e.target.closest('.target-spot');
-    if (!targetSpot) return;
-    
-    targetSpot.classList.remove('drag-over');
-    const pieceId = e.dataTransfer.getData('text/plain');
-    const piece = document.getElementById(pieceId);
-    if (!piece) return;
-    
-    const correctTarget = currentLevelData.targets.find(t => t.id === pieceId);
-    if (correctTarget && targetSpot.dataset.answer === correctTarget.text) {
-        // Correct match
-        matchedPieces.add(pieceId);
-        piece.style.opacity = '0.5';
-        piece.setAttribute('draggable', 'false');
-        targetSpot.classList.add('matched');
-        playSound('correct');
-        
-        // Check if level is complete
-        if (matchedPieces.size === currentLevelData.pieces.length) {
-            handleLevelComplete();
-        }
-    } else {
-        // Wrong match
-        playSound('wrong');
-        piece.style.left = `${currentLevelData.pieces.find(p => p.id === pieceId).x}px`;
-        piece.style.top = `${currentLevelData.pieces.find(p => p.id === pieceId).y}px`;
-    }
-}
-
-function handleLevelComplete() {
-    clearInterval(timer);
-    playSound('levelComplete');
-    score += Math.ceil(timeLeft / 10);
-    
-    const message = document.createElement('div');
-    message.className = 'level-complete-message';
-    message.innerHTML = `
-        <h2>Level ${level} Complete! 🎉</h2>
-        <p>Time Bonus: +${Math.ceil(timeLeft / 10)} ⭐</p>
-        <p>Total Score: ${score} ⭐</p>
+    // Update instructions for selected operation
+    const instructions = document.querySelector('.instructions');
+    instructions.innerHTML = `
+        <p>Level ${level} - Match the ${selectedOperation} problems with their answers!</p>
+        <p>🎯 Drag each equation to its correct answer</p>
     `;
-    document.body.appendChild(message);
     
-    document.getElementById('next-level-btn').disabled = false;
-}
-
-function nextLevel() {
-    level++;
-    document.querySelector('.level-complete-message')?.remove();
-    document.getElementById('next-level-btn').disabled = true;
+    // Start the game
     initLevel();
 }
 
-function updateTimer() {
-    if (timeLeft > 0) {
-        timeLeft--;
-        document.getElementById('timer').textContent = timeLeft;
-    } else {
-        clearInterval(timer);
-        alert('Time\'s up! Try again.');
-        initLevel(); // Restart the current level
-    }
-}
-
-function initLevel() {
-    console.log('Initializing level:', level);
-    // Reset game state
-    timeLeft = 60;
-    matchedPieces.clear();
-    document.getElementById('level').textContent = level;
-    document.getElementById('score').textContent = score;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    // Clear previous level
-    const gameBoard = document.getElementById('gameBoard');
-    gameBoard.innerHTML = '';
-    
-    // Create new level data
-    currentLevelData = createLevelData(level);
-    console.log('Current level data:', currentLevelData);
-    
-    // Create puzzle pieces
-    currentLevelData.pieces.forEach(piece => {
-        const pieceElement = document.createElement('div');
-        pieceElement.id = piece.id;
-        pieceElement.className = 'puzzle-piece';
-        pieceElement.textContent = piece.text;
-        pieceElement.draggable = true;
-        pieceElement.style.left = `${piece.x}px`;
-        pieceElement.style.top = `${piece.y}px`;
-        
-        pieceElement.addEventListener('dragstart', handleDragStart);
-        pieceElement.addEventListener('dragend', handleDragEnd);
-        
-        gameBoard.appendChild(pieceElement);
-    });
-    
-    // Create target spots
-    currentLevelData.targets.forEach(target => {
-        const targetSpot = document.createElement('div');
-        targetSpot.className = 'target-spot';
-        targetSpot.textContent = target.text;
-        targetSpot.style.left = `${target.x}px`;
-        targetSpot.style.top = `${target.y}px`;
-        targetSpot.dataset.answer = target.text;
-        
-        targetSpot.addEventListener('dragover', handleDragOver);
-        targetSpot.addEventListener('dragleave', handleDragLeave);
-        targetSpot.addEventListener('drop', handleDrop);
-        
-        gameBoard.appendChild(targetSpot);
-    });
-    
-    // Start timer
-    clearInterval(timer);
-    timer = setInterval(updateTimer, 1000);
-}
-
-// Load math problems from JSON file
-async function loadMathProblems() {
-    try {
-        console.log('Attempting to load math problems...');
-        const response = await fetch('mathProblems.json');
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const text = await response.text();
-        mathProblems = JSON.parse(text);
-        console.log('Math problems loaded successfully');
-        console.log('Available operations:', Object.keys(mathProblems));
-        
-        // Initialize game after loading problems
-        initLevel();
-    } catch (error) {
-        console.error('Error loading math problems:', error);
-        alert('Error loading math problems. Please check the console for details.');
-    }
-}
-
-// Set up event listeners
+// Modify window.onload to show operation selection first
 window.addEventListener('load', () => {
     // Load sounds first
     loadSounds();
@@ -323,6 +165,10 @@ window.addEventListener('load', () => {
     });
     document.querySelector('.button-container').appendChild(muteBtn);
     
-    // Load math problems and start the game
-    loadMathProblems();
+    // Load math problems then show operation selection
+    loadMathProblems().then(() => {
+        showOperationSelection();
+    });
 });
+
+// ... rest of the existing code ...
