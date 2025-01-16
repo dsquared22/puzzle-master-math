@@ -12,6 +12,7 @@ let selectedOperation = null; // Track selected operation
 // Sound effects with iOS optimization
 const sounds = {};
 let audioContext = null;
+let soundsLoaded = false;
 
 // Function to initialize audio context on user interaction
 function initAudioContext() {
@@ -28,6 +29,8 @@ function initAudioContext() {
 
 // Function to load sounds with enhanced error handling and iOS support
 function loadSounds() {
+    if (soundsLoaded) return; // Don't load sounds multiple times
+    
     console.log('Starting to load sounds...');
     const soundFiles = {
         correct: 'sounds/correct.mp3',
@@ -40,73 +43,89 @@ function loadSounds() {
         console.log(`Attempting to load sound: ${name} from path: ${path}`);
         const audio = new Audio();
         
-        audio.addEventListener('canplaythrough', () => {
-            console.log(`Sound ${name} loaded successfully`);
-        });
-        
-        audio.addEventListener('error', (e) => {
-            console.error(`Sound ${name} failed to load from path ${path}:`, e);
-            console.error('Error code:', e.target.error ? e.target.error.code : 'unknown');
-            sounds[name] = null;
-        });
-
         // Enable inline playback on iOS
         audio.setAttribute('playsinline', 'true');
         audio.setAttribute('webkit-playsinline', 'true');
         audio.preload = 'auto';
+        audio.volume = 1.0;
+        
+        // iOS specific settings
+        audio.controls = false;
+        audio.autoplay = false;
+        
+        audio.addEventListener('canplaythrough', () => {
+            console.log(`Sound ${name} loaded successfully`);
+            // On iOS, play and immediately pause to enable future playback
+            audio.play().then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+            }).catch(e => console.log('Initial play attempt failed:', e));
+        });
+        
+        audio.addEventListener('error', (e) => {
+            console.error(`Sound ${name} failed to load from path ${path}:`, e);
+            sounds[name] = null;
+        });
         
         audio.src = path;
         sounds[name] = audio;
     }
+    
+    soundsLoaded = true;
 }
 
 // Function to play sound with iOS optimization
 function playSound(soundName) {
     if (isMuted || !sounds[soundName]) return;
     
-    console.log(`Attempting to play sound: ${soundName}`);
+    const sound = sounds[soundName];
     
-    // Initialize audio context if needed
-    initAudioContext();
+    // Reset the sound to start
+    sound.currentTime = 0;
     
-    // Resume AudioContext if it was suspended (iOS requirement)
-    if (audioContext?.state === 'suspended') {
-        audioContext.resume();
-    }
-    
-    // Create a new audio element for each play (better for iOS)
-    const sound = new Audio(sounds[soundName].src);
-    sound.setAttribute('playsinline', 'true');
-    sound.setAttribute('webkit-playsinline', 'true');
-    
-    // Play with both promise and event listener for better iOS support
+    // Play the sound with user interaction context
     const playPromise = sound.play();
     
     if (playPromise !== undefined) {
-        playPromise
-            .then(() => {
-                console.log(`Sound ${soundName} started playing`);
-                sound.addEventListener('ended', () => {
-                    console.log(`Sound ${soundName} finished playing`);
-                });
-            })
-            .catch(error => {
-                console.error(`Sound ${soundName} play failed:`, error);
-            });
+        playPromise.then(() => {
+            console.log(`Sound ${soundName} playing`);
+        }).catch(error => {
+            console.error(`Sound play failed:`, error);
+            // Fallback: create and play a new instance
+            const newSound = new Audio(sound.src);
+            newSound.play().catch(e => console.error('Fallback play failed:', e));
+        });
     }
 }
 
-// Initialize audio on first user interaction
-document.addEventListener('touchstart', function initAudioOnFirstTouch() {
-    initAudioContext();
-    if (audioContext) {
-        audioContext.resume();
+// Initialize sounds on first user interaction
+function initSounds() {
+    // Load sounds if not already loaded
+    if (!soundsLoaded) {
+        loadSounds();
+        
+        // Play and immediately pause all sounds to initialize them
+        Object.values(sounds).forEach(sound => {
+            if (sound) {
+                sound.play().then(() => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                }).catch(e => console.log('Initial sound setup failed:', e));
+            }
+        });
     }
-    // Load sounds after user interaction
-    loadSounds();
-    // Remove this listener after first touch
+}
+
+// Add touch/click event listener for sound initialization
+document.addEventListener('touchstart', function initAudioOnFirstTouch() {
+    initSounds();
     document.removeEventListener('touchstart', initAudioOnFirstTouch);
-}, false);
+}, { once: true });
+
+document.addEventListener('click', function initAudioOnFirstClick() {
+    initSounds();
+    document.removeEventListener('click', initAudioOnFirstClick);
+}, { once: true });
 
 // Mute state
 let isMuted = false;
