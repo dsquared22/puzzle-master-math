@@ -536,7 +536,22 @@ window.addEventListener('load', () => {
     `; // Initially hidden
     quitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
-            quitGame();
+            // Stop the timer
+            clearInterval(timer);
+            // Clear any existing game state
+            matchedPieces.clear();
+            usedProblemsThisSession.clear();
+            score = 0;
+            level = 1;
+            // Remove any level complete message if present
+            const levelCompleteMsg = document.querySelector('.level-complete-message');
+            if (levelCompleteMsg) {
+                levelCompleteMsg.remove();
+            }
+            // Reset the game board and show operation selection
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            showOperationSelection();
         }
     });
     
