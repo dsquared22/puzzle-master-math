@@ -117,12 +117,13 @@
         .button-container {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 20px;
             margin-top: 20px;
             flex-wrap: wrap;
         }
 
-        button {
+        .game-button {
             background: #00ff9d;
             color: #1a1a2e;
             border: none;
@@ -132,6 +133,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             min-width: 180px;
+            display: block;
         }
 
         button:hover:not(:disabled) {
@@ -218,6 +220,7 @@
         #quit-btn {
             background: rgba(255, 75, 75, 0.8);
             color: white;
+            order: -1;
         }
 
         #quit-btn:hover {

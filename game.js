@@ -184,7 +184,12 @@ function startGame() {
     document.querySelector('.score-container').style.display = 'flex';
     document.getElementById('next-level-btn').style.display = 'block';
     document.getElementById('hint-btn').style.display = 'block';
-    document.getElementById('quit-btn').style.display = 'block';
+    
+    // Make sure quit button is visible
+    const quitBtn = document.getElementById('quit-btn');
+    if (quitBtn) {
+        quitBtn.style.display = 'block';
+    }
     
     // Reset game state
     score = 0;
@@ -529,29 +534,17 @@ window.addEventListener('load', () => {
     const quitBtn = document.createElement('button');
     quitBtn.id = 'quit-btn';
     quitBtn.innerHTML = 'Quit Game 🚪';
+    quitBtn.className = 'game-button'; // Add a class for consistent styling
     quitBtn.style.cssText = `
         background: rgba(255, 75, 75, 0.8);
         color: white;
         display: none;
-    `; // Initially hidden
+        margin-right: 10px;
+    `;
+
     quitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
-            // Stop the timer
-            clearInterval(timer);
-            // Clear any existing game state
-            matchedPieces.clear();
-            usedProblemsThisSession.clear();
-            score = 0;
-            level = 1;
-            // Remove any level complete message if present
-            const levelCompleteMsg = document.querySelector('.level-complete-message');
-            if (levelCompleteMsg) {
-                levelCompleteMsg.remove();
-            }
-            // Reset the game board and show operation selection
-            const gameBoard = document.getElementById('gameBoard');
-            gameBoard.innerHTML = '';
-            showOperationSelection();
+            quitGame(); // Use the quitGame function we defined earlier
         }
     });
     
