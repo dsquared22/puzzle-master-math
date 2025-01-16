@@ -304,6 +304,110 @@ function updateTimer() {
     }
 }
 
+// Add touch support variables
+let isDragging = false;
+let currentDragElement = null;
+let touchOffset = { x: 0, y: 0 };
+
+function handleTouchStart(e) {
+    const touch = e.touches[0];
+    const piece = e.target.closest('.puzzle-piece');
+    if (!piece) return;
+    
+    e.preventDefault(); // Prevent scrolling while dragging
+    isDragging = true;
+    currentDragElement = piece;
+    
+    // Calculate offset between touch point and element position
+    const rect = piece.getBoundingClientRect();
+    touchOffset.x = touch.clientX - rect.left;
+    touchOffset.y = touch.clientY - rect.top;
+    
+    // Add visual feedback
+    piece.classList.add('dragging');
+    piece.style.zIndex = '1000';
+}
+
+function handleTouchMove(e) {
+    if (!isDragging || !currentDragElement) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    
+    // Update element position
+    const gameBoard = document.getElementById('gameBoard');
+    const boardRect = gameBoard.getBoundingClientRect();
+    
+    // Calculate new position relative to game board
+    let newX = touch.clientX - boardRect.left - touchOffset.x;
+    let newY = touch.clientY - boardRect.top - touchOffset.y;
+    
+    // Keep the piece within the game board bounds
+    newX = Math.max(0, Math.min(newX, boardRect.width - currentDragElement.offsetWidth));
+    newY = Math.max(0, Math.min(newY, boardRect.height - currentDragElement.offsetHeight));
+    
+    currentDragElement.style.left = `${newX}px`;
+    currentDragElement.style.top = `${newY}px`;
+    
+    // Handle target spot highlighting
+    const targetSpots = document.querySelectorAll('.target-spot');
+    targetSpots.forEach(spot => {
+        const spotRect = spot.getBoundingClientRect();
+        if (touch.clientX >= spotRect.left && touch.clientX <= spotRect.right &&
+            touch.clientY >= spotRect.top && touch.clientY <= spotRect.bottom) {
+            spot.classList.add('drag-over');
+        } else {
+            spot.classList.remove('drag-over');
+        }
+    });
+}
+
+function handleTouchEnd(e) {
+    if (!isDragging || !currentDragElement) return;
+    
+    const touch = e.changedTouches[0];
+    const targetSpots = document.querySelectorAll('.target-spot');
+    let matchFound = false;
+    
+    targetSpots.forEach(spot => {
+        const spotRect = spot.getBoundingClientRect();
+        if (touch.clientX >= spotRect.left && touch.clientX <= spotRect.right &&
+            touch.clientY >= spotRect.top && touch.clientY <= spotRect.bottom) {
+            
+            // Handle the drop using the same logic as handleDrop
+            const pieceId = currentDragElement.id;
+            const correctTarget = currentLevelData.targets.find(t => t.id === pieceId);
+            
+            if (correctTarget && spot.dataset.answer === correctTarget.text) {
+                matchedPieces.add(pieceId);
+                currentDragElement.style.opacity = '0.5';
+                currentDragElement.setAttribute('draggable', 'false');
+                spot.classList.add('matched');
+                playSound('correct');
+                
+                if (matchedPieces.size === currentLevelData.pieces.length) {
+                    handleLevelComplete();
+                }
+                matchFound = true;
+            }
+        }
+        spot.classList.remove('drag-over');
+    });
+    
+    if (!matchFound) {
+        // Return to original position
+        const originalPiece = currentLevelData.pieces.find(p => p.id === currentDragElement.id);
+        currentDragElement.style.left = `${originalPiece.x}px`;
+        currentDragElement.style.top = `${originalPiece.y}px`;
+        playSound('wrong');
+    }
+    
+    currentDragElement.classList.remove('dragging');
+    currentDragElement.style.zIndex = '1';
+    isDragging = false;
+    currentDragElement = null;
+}
+
 function initLevel() {
     console.log('Initializing level:', level);
     // Reset game state
@@ -331,8 +435,10 @@ function initLevel() {
         pieceElement.style.left = `${piece.x}px`;
         pieceElement.style.top = `${piece.y}px`;
         
+        // Add both touch and mouse event listeners
         pieceElement.addEventListener('dragstart', handleDragStart);
         pieceElement.addEventListener('dragend', handleDragEnd);
+        pieceElement.addEventListener('touchstart', handleTouchStart);
         
         gameBoard.appendChild(pieceElement);
     });
@@ -408,4 +514,8 @@ window.addEventListener('load', () => {
     loadMathProblems().then(() => {
         showOperationSelection();
     });
+    
+    const gameBoard = document.getElementById('gameBoard');
+    gameBoard.addEventListener('touchmove', handleTouchMove, { passive: false });
+    gameBoard.addEventListener('touchend', handleTouchEnd);
 });
