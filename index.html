@@ -5,8 +5,184 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math Puzzle Master</title>
     <style>
-        /* ... existing styles ... */
-        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            color: #00ff9d;
+            text-shadow: 0 0 20px rgba(0, 255, 157, 0.5);
+            margin: 0 0 20px 0;
+        }
+
+        .score-container {
+            text-align: center;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            line-height: 1.6;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .instructions p {
+            margin: 10px 0;
+        }
+
+        .game-board {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+            margin: 30px 0;
+            border: 2px solid rgba(0, 255, 157, 0.2);
+            overflow: hidden;
+        }
+
+        .puzzle-piece {
+            width: 150px;
+            height: 70px;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(0, 255, 157, 0.3);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            color: white;
+            cursor: move;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+            z-index: 1;
+        }
+
+        .puzzle-piece:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
+        }
+
+        .target-spot {
+            width: 150px;
+            height: 70px;
+            position: absolute;
+            border: 2px dashed rgba(0, 255, 157, 0.5);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            color: white;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .target-spot.drag-over {
+            background: rgba(0, 255, 157, 0.2);
+            border-style: solid;
+            transform: scale(1.05);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #00ff9d;
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .level-complete-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid #00ff9d;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            animation: popIn 0.5s ease-out;
+            z-index: 1000;
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+            min-width: 300px;
+        }
+
+        .level-complete-message h2 {
+            color: #00ff9d;
+            font-size: 2em;
+            margin: 0 0 20px 0;
+        }
+
+        .level-complete-message p {
+            font-size: 1.3em;
+            margin: 10px 0;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            70% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
         .operation-selection {
             display: flex;
             flex-direction: column;
@@ -60,4 +236,4 @@
 
     <script src="game.js"></script>
 </body>
-</html>
+</html> 
