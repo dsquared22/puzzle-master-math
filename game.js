@@ -40,7 +40,7 @@ function loadSounds() {
     }
 }
 
-// Function to play sound with enhanced error handling
+// Function to play sound with enhanced error handling and iOS support
 function playSound(soundName) {
     console.log(`Attempting to play sound: ${soundName}`);
     console.log(`Mute state: ${isMuted}`);
@@ -51,17 +51,14 @@ function playSound(soundName) {
     }
     
     if (!isMuted) {
-        const sound = sounds[soundName].cloneNode();
+        // Create a new Audio instance each time for iOS
+        const sound = new Audio(sounds[soundName].src);
         sound.play()
             .then(() => {
                 console.log(`Sound ${soundName} played successfully`);
             })
             .catch(e => {
                 console.error(`Sound ${soundName} failed to play:`, e);
-                // Try playing without cloning as fallback
-                sounds[soundName].play().catch(e => {
-                    console.error(`Fallback play for ${soundName} also failed:`, e);
-                });
             });
     }
 }
@@ -78,6 +75,7 @@ function showOperationSelection() {
     document.querySelector('.score-container').style.display = 'none';
     document.getElementById('next-level-btn').style.display = 'none';
     document.getElementById('hint-btn').style.display = 'none';
+    document.getElementById('quit-btn').style.display = 'none';
     
     // Create operation selection container
     const selectionContainer = document.createElement('div');
@@ -186,6 +184,7 @@ function startGame() {
     document.querySelector('.score-container').style.display = 'flex';
     document.getElementById('next-level-btn').style.display = 'block';
     document.getElementById('hint-btn').style.display = 'block';
+    document.getElementById('quit-btn').style.display = 'block';
     
     // Reset game state
     score = 0;
@@ -488,6 +487,23 @@ async function loadMathProblems() {
     }
 }
 
+function quitGame() {
+    // Clear any ongoing game state
+    clearInterval(timer);
+    matchedPieces.clear();
+    usedProblemsThisSession.clear();
+    
+    // Remove any level complete message if present
+    document.querySelector('.level-complete-message')?.remove();
+    
+    // Reset scores and level
+    score = 0;
+    level = 1;
+    
+    // Show operation selection
+    showOperationSelection();
+}
+
 // Set up event listeners
 window.addEventListener('load', () => {
     // Load sounds first
@@ -508,7 +524,21 @@ window.addEventListener('load', () => {
         isMuted = !isMuted;
         muteBtn.innerHTML = isMuted ? '🔇' : '🔊';
     });
-    document.querySelector('.button-container').appendChild(muteBtn);
+    
+    // Add quit button
+    const quitBtn = document.createElement('button');
+    quitBtn.id = 'quit-btn';
+    quitBtn.innerHTML = 'Quit Game 🚪';
+    quitBtn.style.display = 'none'; // Initially hidden
+    quitBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
+            quitGame();
+        }
+    });
+    
+    const buttonContainer = document.querySelector('.button-container');
+    buttonContainer.appendChild(quitBtn);
+    buttonContainer.appendChild(muteBtn);
     
     // Load math problems then show operation selection
     loadMathProblems().then(() => {
