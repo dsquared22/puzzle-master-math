@@ -7,132 +7,31 @@ let matchedPieces = new Set();
 let currentLevelData = null;
 let usedProblemsThisSession = new Set();
 let mathProblems = null;
-let selectedOperation = null; // Track selected operation
-
-// Sound effects with iOS optimization
-const sounds = {};
-let audioContext = null;
-let soundsLoaded = false;
-
-// Add user state
+let selectedOperation = null;
 let currentUser = '';
 let userHighScores = {};
 
-// Function to initialize audio context on user interaction
-function initAudioContext() {
-    if (!audioContext) {
-        try {
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioContext = new AudioContext();
-            console.log('AudioContext initialized');
-        } catch (e) {
-            console.error('AudioContext initialization failed:', e);
-        }
-    }
-}
+// Simplified sound system
+const sounds = {
+    correct: new Audio('sounds/correct.mp3'),
+    wrong: new Audio('sounds/wrong.mp3'),
+    levelComplete: new Audio('sounds/level-complete.mp3')
+};
 
-// Function to load sounds with enhanced error handling and iOS support
-function loadSounds() {
-    if (soundsLoaded) return; // Don't load sounds multiple times
-    
-    console.log('Starting to load sounds...');
-    const soundFiles = {
-        correct: 'sounds/correct.mp3',
-        wrong: 'sounds/wrong.mp3',
-        levelComplete: 'sounds/level-complete.mp3'
-    };
-
-    // Pre-load audio elements
-    for (const [name, path] of Object.entries(soundFiles)) {
-        console.log(`Attempting to load sound: ${name} from path: ${path}`);
-        const audio = new Audio();
-        
-        // Enable inline playback on iOS
-        audio.setAttribute('playsinline', 'true');
-        audio.setAttribute('webkit-playsinline', 'true');
-        audio.preload = 'auto';
-        audio.volume = 1.0;
-        
-        // iOS specific settings
-        audio.controls = false;
-        audio.autoplay = false;
-        
-        audio.addEventListener('canplaythrough', () => {
-            console.log(`Sound ${name} loaded successfully`);
-            // On iOS, play and immediately pause to enable future playback
-            audio.play().then(() => {
-                audio.pause();
-                audio.currentTime = 0;
-            }).catch(e => console.log('Initial play attempt failed:', e));
-        });
-        
-        audio.addEventListener('error', (e) => {
-            console.error(`Sound ${name} failed to load from path ${path}:`, e);
-            sounds[name] = null;
-        });
-        
-        audio.src = path;
-        sounds[name] = audio;
-    }
-    
-    soundsLoaded = true;
-}
-
-// Function to play sound with iOS optimization
-function playSound(soundName) {
-    if (isMuted || !sounds[soundName]) return;
-    
-    const sound = sounds[soundName];
-    
-    // Reset the sound to start
-    sound.currentTime = 0;
-    
-    // Play the sound with user interaction context
-    const playPromise = sound.play();
-    
-    if (playPromise !== undefined) {
-        playPromise.then(() => {
-            console.log(`Sound ${soundName} playing`);
-        }).catch(error => {
-            console.error(`Sound play failed:`, error);
-            // Fallback: create and play a new instance
-            const newSound = new Audio(sound.src);
-            newSound.play().catch(e => console.error('Fallback play failed:', e));
-        });
-    }
-}
-
-// Initialize sounds on first user interaction
-function initSounds() {
-    // Load sounds if not already loaded
-    if (!soundsLoaded) {
-        loadSounds();
-        
-        // Play and immediately pause all sounds to initialize them
-        Object.values(sounds).forEach(sound => {
-            if (sound) {
-                sound.play().then(() => {
-                    sound.pause();
-                    sound.currentTime = 0;
-                }).catch(e => console.log('Initial sound setup failed:', e));
-            }
-        });
-    }
-}
-
-// Add touch/click event listener for sound initialization
-document.addEventListener('touchstart', function initAudioOnFirstTouch() {
-    initSounds();
-    document.removeEventListener('touchstart', initAudioOnFirstTouch);
-}, { once: true });
-
-document.addEventListener('click', function initAudioOnFirstClick() {
-    initSounds();
-    document.removeEventListener('click', initAudioOnFirstClick);
-}, { once: true });
-
-// Mute state
 let isMuted = false;
+
+// Simple sound play function
+function playSound(soundName) {
+    if (!isMuted && sounds[soundName]) {
+        // Stop the sound if it's already playing
+        sounds[soundName].pause();
+        sounds[soundName].currentTime = 0;
+        // Play the sound
+        sounds[soundName].play().catch(error => {
+            console.log('Sound play failed:', error);
+        });
+    }
+}
 
 // Function to create operation selection screen
 function showOperationSelection() {
@@ -710,9 +609,6 @@ function quitGame() {
 
 // Set up event listeners
 window.addEventListener('load', () => {
-    // Load sounds first
-    loadSounds();
-    
     // Load high scores
     loadHighScores();
     
@@ -754,7 +650,7 @@ window.addEventListener('load', () => {
     buttonContainer.insertBefore(quitBtn, buttonContainer.firstChild);
     buttonContainer.appendChild(muteBtn);
     
-    // Start with name prompt instead of loading math problems directly
+    // Start with name prompt
     loadMathProblems().then(() => {
         showNamePrompt();
     });
