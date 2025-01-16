@@ -14,6 +14,10 @@ const sounds = {};
 let audioContext = null;
 let soundsLoaded = false;
 
+// Add user state
+let currentUser = '';
+let userHighScores = {};
+
 // Function to initialize audio context on user interaction
 function initAudioContext() {
     if (!audioContext) {
@@ -337,10 +341,139 @@ function handleDrop(e) {
     }
 }
 
+// Function to load high scores from localStorage
+function loadHighScores() {
+    const savedScores = localStorage.getItem('mathPuzzleHighScores');
+    if (savedScores) {
+        userHighScores = JSON.parse(savedScores);
+    }
+}
+
+// Function to save high scores to localStorage
+function saveHighScore(user, score) {
+    userHighScores[user] = Math.max(score, userHighScores[user] || 0);
+    localStorage.setItem('mathPuzzleHighScores', JSON.stringify(userHighScores));
+}
+
+// Function to show user name prompt
+function showNamePrompt() {
+    const gameBoard = document.getElementById('gameBoard');
+    gameBoard.innerHTML = '';
+    
+    // Hide game elements
+    document.querySelector('.score-container').style.display = 'none';
+    document.getElementById('next-level-btn').style.display = 'none';
+    document.getElementById('hint-btn').style.display = 'none';
+    
+    const promptContainer = document.createElement('div');
+    promptContainer.className = 'name-prompt';
+    promptContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        padding: 40px;
+    `;
+    
+    const title = document.createElement('h2');
+    title.textContent = 'Welcome to Math Puzzle Master!';
+    title.style.color = '#00ff9d';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Enter your name';
+    input.style.cssText = `
+        padding: 15px;
+        font-size: 1.2em;
+        border-radius: 10px;
+        border: 2px solid #00ff9d;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        width: 250px;
+        text-align: center;
+    `;
+    
+    const startButton = document.createElement('button');
+    startButton.textContent = 'Start Playing! 🚀';
+    startButton.className = 'operation-btn';
+    startButton.style.cssText = `
+        width: 250px;
+        padding: 15px;
+        font-size: 1.2em;
+        margin: 10px;
+        cursor: pointer;
+        background: rgba(0, 255, 157, 0.1);
+        border: 2px solid #00ff9d;
+        color: white;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    `;
+    
+    startButton.addEventListener('click', () => {
+        const name = input.value.trim();
+        if (name) {
+            currentUser = name;
+            showOperationSelection();
+        } else {
+            alert('Please enter your name to continue!');
+        }
+    });
+    
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            startButton.click();
+        }
+    });
+    
+    promptContainer.appendChild(title);
+    promptContainer.appendChild(input);
+    promptContainer.appendChild(startButton);
+    gameBoard.appendChild(promptContainer);
+}
+
+// Modify handleLevelComplete to check for high score
 function handleLevelComplete() {
     clearInterval(timer);
     playSound('levelComplete');
     score += Math.ceil(timeLeft / 10);
+    
+    // Check if this is a new high score
+    const currentHighScore = userHighScores[currentUser] || 0;
+    const isNewHighScore = score > currentHighScore;
+    
+    if (isNewHighScore) {
+        saveHighScore(currentUser, score);
+        // Create high score celebration
+        const rocket = document.createElement('div');
+        rocket.className = 'rocket';
+        rocket.innerHTML = '🚀';
+        rocket.style.cssText = `
+            position: fixed;
+            font-size: 3em;
+            left: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: flyAcross 2s linear forwards;
+            z-index: 1000;
+        `;
+        document.body.appendChild(rocket);
+        
+        // Add animation style if not already present
+        if (!document.querySelector('#rocket-animation')) {
+            const style = document.createElement('style');
+            style.id = 'rocket-animation';
+            style.textContent = `
+                @keyframes flyAcross {
+                    from { left: -50px; }
+                    to { left: calc(100% + 50px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Remove rocket after animation
+        setTimeout(() => rocket.remove(), 2000);
+    }
     
     const message = document.createElement('div');
     message.className = 'level-complete-message';
@@ -348,6 +481,8 @@ function handleLevelComplete() {
         <h2>Level ${level} Complete! 🎉</h2>
         <p>Time Bonus: +${Math.ceil(timeLeft / 10)} ⭐</p>
         <p>Total Score: ${score} ⭐</p>
+        ${isNewHighScore ? `<p class="new-high-score">🏆 New High Score! 🏆</p>` : 
+        `<p>High Score: ${currentHighScore} ⭐</p>`}
     `;
     document.body.appendChild(message);
     
@@ -578,6 +713,9 @@ window.addEventListener('load', () => {
     // Load sounds first
     loadSounds();
     
+    // Load high scores
+    loadHighScores();
+    
     // Set up button listeners
     document.getElementById('next-level-btn').addEventListener('click', nextLevel);
     document.getElementById('hint-btn').addEventListener('click', () => {
@@ -598,27 +736,27 @@ window.addEventListener('load', () => {
     const quitBtn = document.createElement('button');
     quitBtn.id = 'quit-btn';
     quitBtn.innerHTML = 'Quit Game 🚪';
-    quitBtn.className = 'game-button'; // Add a class for consistent styling
+    quitBtn.className = 'game-button';
     quitBtn.style.cssText = `
         background: rgba(255, 75, 75, 0.8);
         color: white;
         display: none;
         margin-right: 10px;
     `;
-
+    
     quitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
-            quitGame(); // Use the quitGame function we defined earlier
+            quitGame();
         }
     });
     
     const buttonContainer = document.querySelector('.button-container');
-    buttonContainer.insertBefore(quitBtn, buttonContainer.firstChild); // Add quit button first
-    buttonContainer.appendChild(muteBtn); // Keep mute button at the end
+    buttonContainer.insertBefore(quitBtn, buttonContainer.firstChild);
+    buttonContainer.appendChild(muteBtn);
     
-    // Load math problems then show operation selection
+    // Start with name prompt instead of loading math problems directly
     loadMathProblems().then(() => {
-        showOperationSelection();
+        showNamePrompt();
     });
     
     const gameBoard = document.getElementById('gameBoard');
