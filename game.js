@@ -529,7 +529,11 @@ window.addEventListener('load', () => {
     const quitBtn = document.createElement('button');
     quitBtn.id = 'quit-btn';
     quitBtn.innerHTML = 'Quit Game 🚪';
-    quitBtn.style.display = 'none'; // Initially hidden
+    quitBtn.style.cssText = `
+        background: rgba(255, 75, 75, 0.8);
+        color: white;
+        display: none;
+    `; // Initially hidden
     quitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
             quitGame();
@@ -537,8 +541,8 @@ window.addEventListener('load', () => {
     });
     
     const buttonContainer = document.querySelector('.button-container');
-    buttonContainer.appendChild(quitBtn);
-    buttonContainer.appendChild(muteBtn);
+    buttonContainer.insertBefore(quitBtn, buttonContainer.firstChild); // Add quit button first
+    buttonContainer.appendChild(muteBtn); // Keep mute button at the end
     
     // Load math problems then show operation selection
     loadMathProblems().then(() => {
