@@ -9,10 +9,24 @@ let usedProblemsThisSession = new Set();
 let mathProblems = null;
 let selectedOperation = null; // Track selected operation
 
-// Sound effects
+// Sound effects with iOS optimization
 const sounds = {};
+let audioContext = null;
 
-// Function to load sounds with enhanced error handling and debugging
+// Function to initialize audio context on user interaction
+function initAudioContext() {
+    if (!audioContext) {
+        try {
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            console.log('AudioContext initialized');
+        } catch (e) {
+            console.error('AudioContext initialization failed:', e);
+        }
+    }
+}
+
+// Function to load sounds with enhanced error handling and iOS support
 function loadSounds() {
     console.log('Starting to load sounds...');
     const soundFiles = {
@@ -21,6 +35,7 @@ function loadSounds() {
         levelComplete: 'sounds/level-complete.mp3'
     };
 
+    // Pre-load audio elements
     for (const [name, path] of Object.entries(soundFiles)) {
         console.log(`Attempting to load sound: ${name} from path: ${path}`);
         const audio = new Audio();
@@ -32,36 +47,66 @@ function loadSounds() {
         audio.addEventListener('error', (e) => {
             console.error(`Sound ${name} failed to load from path ${path}:`, e);
             console.error('Error code:', e.target.error ? e.target.error.code : 'unknown');
-            sounds[name] = null; // Mark as unavailable
+            sounds[name] = null;
         });
+
+        // Enable inline playback on iOS
+        audio.setAttribute('playsinline', 'true');
+        audio.setAttribute('webkit-playsinline', 'true');
+        audio.preload = 'auto';
         
         audio.src = path;
         sounds[name] = audio;
     }
 }
 
-// Function to play sound with enhanced error handling and iOS support
+// Function to play sound with iOS optimization
 function playSound(soundName) {
-    console.log(`Attempting to play sound: ${soundName}`);
-    console.log(`Mute state: ${isMuted}`);
+    if (isMuted || !sounds[soundName]) return;
     
-    if (!sounds[soundName]) {
-        console.warn(`Sound ${soundName} is not available`);
-        return;
+    console.log(`Attempting to play sound: ${soundName}`);
+    
+    // Initialize audio context if needed
+    initAudioContext();
+    
+    // Resume AudioContext if it was suspended (iOS requirement)
+    if (audioContext?.state === 'suspended') {
+        audioContext.resume();
     }
     
-    if (!isMuted) {
-        // Create a new Audio instance each time for iOS
-        const sound = new Audio(sounds[soundName].src);
-        sound.play()
+    // Create a new audio element for each play (better for iOS)
+    const sound = new Audio(sounds[soundName].src);
+    sound.setAttribute('playsinline', 'true');
+    sound.setAttribute('webkit-playsinline', 'true');
+    
+    // Play with both promise and event listener for better iOS support
+    const playPromise = sound.play();
+    
+    if (playPromise !== undefined) {
+        playPromise
             .then(() => {
-                console.log(`Sound ${soundName} played successfully`);
+                console.log(`Sound ${soundName} started playing`);
+                sound.addEventListener('ended', () => {
+                    console.log(`Sound ${soundName} finished playing`);
+                });
             })
-            .catch(e => {
-                console.error(`Sound ${soundName} failed to play:`, e);
+            .catch(error => {
+                console.error(`Sound ${soundName} play failed:`, error);
             });
     }
 }
+
+// Initialize audio on first user interaction
+document.addEventListener('touchstart', function initAudioOnFirstTouch() {
+    initAudioContext();
+    if (audioContext) {
+        audioContext.resume();
+    }
+    // Load sounds after user interaction
+    loadSounds();
+    // Remove this listener after first touch
+    document.removeEventListener('touchstart', initAudioOnFirstTouch);
+}, false);
 
 // Mute state
 let isMuted = false;
