@@ -11,7 +11,7 @@ let selectedOperation = null;
 let currentUser = '';
 let userHighScores = {};
 
-// Simplified sound system
+// Sound system with cooldown
 const sounds = {
     correct: new Audio('sounds/correct.mp3'),
     wrong: new Audio('sounds/wrong.mp3'),
@@ -19,17 +19,29 @@ const sounds = {
 };
 
 let isMuted = false;
+let lastSoundTime = 0;
+const SOUND_COOLDOWN = 500; // 500ms cooldown between sounds
 
-// Simple sound play function
+// Sound play function with cooldown
 function playSound(soundName) {
-    if (!isMuted && sounds[soundName]) {
-        // Stop the sound if it's already playing
-        sounds[soundName].pause();
+    const now = Date.now();
+    if (isMuted || !sounds[soundName] || now - lastSoundTime < SOUND_COOLDOWN) {
+        return;
+    }
+    
+    // Stop all sounds
+    Object.values(sounds).forEach(sound => {
+        sound.pause();
+        sound.currentTime = 0;
+    });
+    
+    // Play the new sound
+    try {
         sounds[soundName].currentTime = 0;
-        // Play the sound
-        sounds[soundName].play().catch(error => {
-            console.log('Sound play failed:', error);
-        });
+        sounds[soundName].play();
+        lastSoundTime = now;
+    } catch (error) {
+        console.log('Sound play failed:', error);
     }
 }
 
