@@ -8,6 +8,7 @@ let currentLevelData = null;
 let usedProblemsThisSession = new Set();
 let mathProblems = null;
 let selectedOperation = null;
+let selectedDifficulty = null;
 let currentUser = '';
 let userHighScores = {};
 
@@ -59,20 +60,90 @@ function showOperationSelection() {
     // Create operation selection container
     const selectionContainer = document.createElement('div');
     selectionContainer.className = 'operation-selection';
-    selectionContainer.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-        padding: 20px;
-    `;
     
     const title = document.createElement('h2');
     title.textContent = 'Choose an Operation';
     title.style.color = '#00ff9d';
+    title.style.marginBottom = '20px';
     
     const operations = ['addition', 'subtraction', 'multiplication', 'division'];
     const symbols = { addition: '+', subtraction: '-', multiplication: '×', division: '÷' };
+    
+    // Create difficulty selection first
+    const difficultyTitle = document.createElement('h3');
+    difficultyTitle.textContent = 'Select Difficulty';
+    difficultyTitle.style.color = '#00ff9d';
+    difficultyTitle.style.marginTop = '20px';
+    
+    const difficultyContainer = document.createElement('div');
+    difficultyContainer.style.cssText = `
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        justify-content: center;
+        flex-wrap: wrap;
+    `;
+    
+    const difficulties = ['easy', 'medium', 'hard'];
+    const difficultyEmojis = { easy: '😊', medium: '🤔', hard: '🤯' };
+    
+    difficulties.forEach(difficulty => {
+        const button = document.createElement('button');
+        button.className = 'difficulty-btn';
+        button.innerHTML = `${difficulty.toUpperCase()} ${difficultyEmojis[difficulty]}`;
+        button.style.cssText = `
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background: rgba(0, 255, 157, 0.1);
+            border: 2px solid #00ff9d;
+            color: white;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        `;
+        
+        button.addEventListener('mouseover', () => {
+            button.style.background = 'rgba(0, 255, 157, 0.3)';
+        });
+        
+        button.addEventListener('mouseout', () => {
+            button.style.background = 'rgba(0, 255, 157, 0.1)';
+        });
+        
+        button.addEventListener('click', () => {
+            // Update selected difficulty
+            selectedDifficulty = difficulty;
+            
+            // Update visual feedback
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.style.opacity = '0.7';
+                btn.style.transform = 'scale(1)';
+            });
+            button.style.opacity = '1';
+            button.style.transform = 'scale(1.1)';
+            
+            // Show operations after difficulty is selected
+            document.getElementById('operations-container').style.display = 'flex';
+        });
+        
+        difficultyContainer.appendChild(button);
+    });
+    
+    // Create operations container
+    const operationsContainer = document.createElement('div');
+    operationsContainer.id = 'operations-container';
+    operationsContainer.style.cssText = `
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    `;
+    
+    const operationsTitle = document.createElement('h3');
+    operationsTitle.textContent = 'Select Operation';
+    operationsTitle.style.color = '#00ff9d';
+    operationsTitle.style.marginTop = '20px';
     
     operations.forEach(operation => {
         const button = document.createElement('button');
@@ -92,42 +163,45 @@ function showOperationSelection() {
         `;
         
         button.addEventListener('mouseover', () => {
-            button.style.background = 'rgba(0, 255, 157, 0.3)';
+            if (selectedDifficulty) {
+                button.style.background = 'rgba(0, 255, 157, 0.3)';
+            }
         });
         
         button.addEventListener('mouseout', () => {
-            button.style.background = 'rgba(0, 255, 157, 0.1)';
+            if (selectedDifficulty) {
+                button.style.background = 'rgba(0, 255, 157, 0.1)';
+            }
         });
         
         button.addEventListener('click', () => {
-            selectedOperation = operation;
-            startGame();
+            if (selectedDifficulty) {
+                selectedOperation = operation;
+                startGame();
+            } else {
+                alert('Please select a difficulty level first!');
+            }
         });
         
-        selectionContainer.appendChild(button);
+        operationsContainer.appendChild(button);
     });
     
-    gameBoard.appendChild(title);
+    selectionContainer.appendChild(title);
+    selectionContainer.appendChild(difficultyTitle);
+    selectionContainer.appendChild(difficultyContainer);
+    selectionContainer.appendChild(operationsTitle);
+    selectionContainer.appendChild(operationsContainer);
+    
     gameBoard.appendChild(selectionContainer);
 }
 
-// Modify generateProblems to use only selected operation
+// Modify generateProblems to use selected difficulty
 function generateProblems(level) {
     const problems = [];
     const usedAnswers = new Set();
-    let difficulty;
 
-    // Define difficulty based on level
-    if (level <= 3) {
-        difficulty = 'easy';
-    } else if (level <= 6) {
-        difficulty = 'medium';
-    } else {
-        difficulty = 'hard';
-    }
-
-    // Get problems only from selected operation
-    const availableProblems = mathProblems[selectedOperation][difficulty].filter(
+    // Use the selected difficulty instead of determining by level
+    const availableProblems = mathProblems[selectedOperation][selectedDifficulty].filter(
         p => !usedAnswers.has(p.answer) && !usedProblemsThisSession.has(p.text)
     );
 
@@ -158,6 +232,7 @@ function generateProblems(level) {
     return problems;
 }
 
+// Update startGame function to include difficulty in instructions
 function startGame() {
     // Show game elements
     document.querySelector('.score-container').style.display = 'flex';
@@ -175,10 +250,10 @@ function startGame() {
     level = 1;
     usedProblemsThisSession.clear();
     
-    // Update instructions for selected operation
+    // Update instructions to include difficulty
     const instructions = document.querySelector('.instructions');
     instructions.innerHTML = `
-        <p>Level ${level} - Match the ${selectedOperation} problems with their answers!</p>
+        <p>Level ${level} - ${selectedDifficulty.toUpperCase()} ${selectedOperation} problems</p>
         <p>🎯 Drag each equation to its correct answer</p>
     `;
     
