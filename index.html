@@ -198,23 +198,28 @@
             justify-content: center;
         }
         
-        .operation-btn {
-            width: 300px;
-            padding: 25px;
-            font-size: 1.5em;
-            margin: 10px 0;
+        .difficulty-btn, .operation-btn {
+            width: 200px;
+            padding: 15px;
+            font-size: 1.2em;
+            margin: 10px;
             cursor: pointer;
             background: rgba(0, 255, 157, 0.1);
             border: 2px solid #00ff9d;
             color: white;
-            border-radius: 15px;
+            border-radius: 10px;
             transition: all 0.3s ease;
-            text-align: center;
         }
         
-        .operation-btn:hover {
+        .difficulty-btn:hover, .operation-btn:hover {
             background: rgba(0, 255, 157, 0.3);
             transform: scale(1.05);
+        }
+        
+        .difficulty-btn.selected {
+            background: rgba(0, 255, 157, 0.3);
+            transform: scale(1.1);
+            opacity: 1;
         }
 
         #quit-btn {
@@ -280,9 +285,7 @@
             <p>Choose an operation to begin!</p>
         </div>
 
-        <div class="game-board" id="gameBoard">
-            <!-- Operation selection or game pieces will be added here by JavaScript -->
-        </div>
+        <div class="game-board" id="gameBoard"></div>
 
         <div class="button-container">
             <button id="hint-btn">How to Play 💡</button>
